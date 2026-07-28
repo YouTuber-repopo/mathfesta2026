@@ -11,7 +11,7 @@ class Compression:
     self.dimension = dimension
     self._block_size = 8
     
-  def encode(self):
+  def encode(self, k: int):
     blocks = self.split_into_blocks()
     self._data_size = blocks.shape[:-self.dimension]
     self._indices = list(product(*[range(size) for size in self._data_size]))
@@ -19,7 +19,7 @@ class Compression:
     dct_blocks = self.dct_for_each_box(blocks)
     quantized_blocks = dct_blocks
     for index in self._indices:
-      quantized_blocks[*index] = self.quantize(quantized_blocks[*index], 8)
+      quantized_blocks[*index] = self.quantize(quantized_blocks[*index], k)
 
     delta_dc = self.difference_for_dc(quantized_blocks)
 
@@ -30,13 +30,14 @@ class Compression:
       block = quantized_blocks[*index]
       elements = np.array([block[*point] for point in points[1:]])
       run, length = self.rle(elements)
-      run_length += list(zip(run,length))
+      run_length += list(zip([int(x) for x in run],[int(x) for x in length]))
 
     dc_coded, dc_code_table = self.huffman(delta_dc)
     ac_coded, ac_code_table = self.huffman(run_length)
-    print(dc_code_table, ac_code_table)
-    print(list(dc_coded))
-    print(list(ac_coded))
+    
+    format_data = f'{dc_code_table} {ac_code_table} {k} {dc_coded} {ac_coded}'
+    return format_data
+
 
   def split_into_blocks(self) -> np.ndarray:
     return view_as_blocks(self.arr, (self._block_size,) * self.dimension)
