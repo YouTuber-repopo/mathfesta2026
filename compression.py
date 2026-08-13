@@ -35,8 +35,8 @@ class Compression:
     dc_coded, dc_code_table = self.huffman(delta_dc)
     ac_coded, ac_code_table = self.huffman(run_length)
     
-    format_data = f'{dc_code_table} {ac_code_table} {k} {dc_coded} {ac_coded}'
-    return format_data
+    data_size = len(dc_code_table)+len(ac_code_table)+len(dc_coded)+len(ac_coded)+1
+    return data_size
 
 
   def split_into_blocks(self) -> np.ndarray:
